@@ -15,8 +15,10 @@ bun run dev
 Set local secrets before starting the server:
 
 ```bash
-export ACCESS_TOKEN_SECRET=access-secret
-export REFRESH_TOKEN_SECRET=refresh-secret
+cp dev.env.example dev.env
+set -a
+. ./dev.env
+set +a
 ```
 
 Run tests from this package or the workspace root:

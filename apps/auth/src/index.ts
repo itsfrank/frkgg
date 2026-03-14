@@ -10,6 +10,8 @@ type AuthPayload = {
 type AppConfig = {
     accessTokenSecret: string;
     refreshTokenSecret: string;
+    accessTokenTtl?: string;
+    refreshTokenTtl?: string;
 };
 
 export function createApp(appConfig: AppConfig) {
@@ -32,13 +34,18 @@ export function createApp(appConfig: AppConfig) {
         jwtRefresh: RefreshJwt,
         auth: AuthPayload,
     ) {
+        const accessTokenTtl = appConfig.accessTokenTtl ?? '10s';
+        const refreshTokenTtl = appConfig.refreshTokenTtl ?? '30s';
+
         const newAccessToken = await jwtAccess.sign({
             ...auth,
-            exp: '10s',
+            exp: accessTokenTtl,
+            jti: crypto.randomUUID(),
         });
         const newRefreshToken = await jwtRefresh.sign({
             subject: auth.subject,
-            exp: '30s',
+            exp: refreshTokenTtl,
+            jti: crypto.randomUUID(),
         });
         return {
             access: newAccessToken,
@@ -65,6 +72,29 @@ export function createApp(appConfig: AppConfig) {
         refreshCookie.sameSite = 'lax';
         refreshCookie.path = '/';
         refreshCookie.domain = 'localhost';
+    }
+
+    function clearCookies(
+        accessCookie: Cookie<string | undefined>,
+        refreshCookie: Cookie<string | undefined>,
+    ) {
+        accessCookie.value = '';
+        accessCookie.httpOnly = true;
+        accessCookie.secure = false;
+        accessCookie.sameSite = 'lax';
+        accessCookie.path = '/';
+        accessCookie.domain = 'localhost';
+        accessCookie.maxAge = 0;
+        accessCookie.expires = new Date(0);
+
+        refreshCookie.value = '';
+        refreshCookie.httpOnly = true;
+        refreshCookie.secure = false;
+        refreshCookie.sameSite = 'lax';
+        refreshCookie.path = '/';
+        refreshCookie.domain = 'localhost';
+        refreshCookie.maxAge = 0;
+        refreshCookie.expires = new Date(0);
     }
 
     async function refreshTokens(
@@ -155,9 +185,11 @@ export function createApp(appConfig: AppConfig) {
                 };
             },
         )
-        .get('/logout', ({ cookie: { refreshCookie } }) => {
+        .get('/logout', ({ cookie: { accessCookie, refreshCookie } }) => {
             if (refreshCookie.value)
                 refreshTokenStore.delete(refreshCookie.value);
+
+            clearCookies(accessCookie, refreshCookie);
             return { ok: true };
         })
         .get(
