@@ -23,4 +23,3 @@ export function err<T, E>(error: E): Result<T, E> {
         error,
     };
 }
-

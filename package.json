@@ -1,16 +1,21 @@
 {
-  "name": "frkgg",
-  "workspaces": [
-    "apps/*",
-    "shared/*"
-  ],
-  "type": "module",
-  "private": true,
-  "devDependencies": {
-    "@biomejs/biome": "2.4.6",
-    "@types/bun": "latest"
-  },
-  "peerDependencies": {
-    "typescript": "^5"
-  }
+    "name": "frkgg",
+    "workspaces": [
+        "apps/*",
+        "shared/*"
+    ],
+    "type": "module",
+    "private": true,
+    "scripts": {
+        "lint": "bunx biome check .",
+        "test": "bun test",
+        "typecheck": "bunx tsc --noEmit"
+    },
+    "devDependencies": {
+        "@biomejs/biome": "2.4.6",
+        "@types/bun": "latest"
+    },
+    "peerDependencies": {
+        "typescript": "^5"
+    }
 }

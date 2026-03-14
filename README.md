@@ -6,10 +6,16 @@ To install dependencies:
 bun install
 ```
 
-To run:
+To run the auth app:
 
 ```bash
-bun run index.ts
+bun run --filter auth dev
 ```
 
-This project was created using `bun init` in bun v1.3.4. [Bun](https://bun.com) is a fast all-in-one JavaScript runtime.
+Useful checks:
+
+```bash
+bun run test
+bun run typecheck
+bun run lint
+```

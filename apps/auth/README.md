@@ -1,6 +1,6 @@
 # auth
 
-To install dependencies:
+To install dependencies from the workspace root:
 
 ```bash
 bun install
@@ -9,7 +9,18 @@ bun install
 To run:
 
 ```bash
-bun run index.ts
+bun run dev
 ```
 
-This project was created using `bun init` in bun v1.3.4. [Bun](https://bun.com) is a fast all-in-one JavaScript runtime.
+Set local secrets before starting the server:
+
+```bash
+export ACCESS_TOKEN_SECRET=access-secret
+export REFRESH_TOKEN_SECRET=refresh-secret
+```
+
+Run tests from this package or the workspace root:
+
+```bash
+bun run test
+```
