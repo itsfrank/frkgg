@@ -1,0 +1,12 @@
+{
+    "name": "@frkgg/shared",
+    "type": "module",
+    "private": true,
+    "exports": {
+        ".": "./src/index.ts",
+        "./result": "./src/result.ts"
+    },
+    "peerDependencies": {
+        "typescript": "^5"
+    }
+}

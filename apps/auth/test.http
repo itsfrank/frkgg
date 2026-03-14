@@ -1,0 +1,6 @@
+GET localhost:3000/login
+
+###
+
+GET localhost:3000/me
+cookie: access=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJuYW1lIjoiZnJrIiwiZXhwIjoxNzczMzcyODMzLCJpYXQiOjE3NzMzNzI4MjN9.2p0JbL9aMOO_Pe8D_2MnRxR7En8Y_In7eRuuXhi_1Ec

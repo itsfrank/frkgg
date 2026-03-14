@@ -1,0 +1,21 @@
+{
+    "name": "auth",
+    "module": "index.ts",
+    "type": "module",
+    "private": true,
+    "scripts": {
+        "dev": "bun run --watch src/index.ts"
+    },
+    "devDependencies": {
+        "@types/bun": "latest"
+    },
+    "peerDependencies": {
+        "typescript": "^5"
+    },
+    "dependencies": {
+        "@frkgg/shared": "workspace:*",
+        "@elysiajs/jwt": "^1.4.1",
+        "elysia": "^1.4.27",
+        "jose": "^6.2.1"
+    }
+}
