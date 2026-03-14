@@ -4,6 +4,7 @@
     "type": "module",
     "private": true,
     "scripts": {
+        "coverage": "bun test --coverage",
         "dev": "bun run --watch src/index.ts",
         "format": "bunx biome check --write .",
         "lint": "bunx biome check .",
