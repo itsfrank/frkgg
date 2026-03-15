@@ -10,11 +10,13 @@
         "lint": "bunx biome check .",
         "coverage:report": "bun test --coverage --coverage-reporter=lcov && genhtml coverage/lcov.info --output-directory coverage/html && open coverage/html/index.html",
         "test": "bun test",
-        "typecheck": "bunx tsc --noEmit"
+        "typecheck": "bunx tsc --noEmit",
+        "dev": "bun run ./scripts/dev.ts"
     },
     "devDependencies": {
         "@biomejs/biome": "2.4.6",
-        "@types/bun": "latest"
+        "@types/bun": "latest",
+        "concurrently": "^9.2.1"
     },
     "peerDependencies": {
         "typescript": "^5"

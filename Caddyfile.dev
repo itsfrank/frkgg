@@ -1,0 +1,11 @@
+{
+	log {
+		output stdout
+		format console
+	}
+}
+
+auth.frk.localhost {
+    tls internal
+	reverse_proxy localhost:3000
+}
