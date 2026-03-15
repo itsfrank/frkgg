@@ -9,3 +9,8 @@ auth.frk.localhost {
     tls internal
 	reverse_proxy localhost:3000
 }
+
+frk.localhost {
+	tls internal
+	reverse_proxy localhost:3001
+}

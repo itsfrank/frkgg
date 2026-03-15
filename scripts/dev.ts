@@ -11,6 +11,11 @@ const commands = [
         name: 'auth',
         prefixColor: 'green',
     },
+    {
+        command: 'bun run --filter site dev',
+        name: 'site',
+        prefixColor: 'yellow',
+    },
 ];
 
 const { result } = concurrently(commands, {
