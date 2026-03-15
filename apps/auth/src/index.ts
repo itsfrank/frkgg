@@ -8,6 +8,7 @@ type AuthPayload = {
 };
 
 type AppConfig = {
+    domain: string;
     accessTokenSecret: string;
     refreshTokenSecret: string;
     accessTokenTtl?: string;
@@ -64,14 +65,14 @@ export function createApp(appConfig: AppConfig) {
         accessCookie.secure = false;
         accessCookie.sameSite = 'lax';
         accessCookie.path = '/';
-        accessCookie.domain = 'localhost';
+        accessCookie.domain = appConfig.domain;
 
         refreshCookie.value = refreshToken;
         refreshCookie.httpOnly = true;
         refreshCookie.secure = false;
         refreshCookie.sameSite = 'lax';
         refreshCookie.path = '/';
-        refreshCookie.domain = 'localhost';
+        refreshCookie.domain = appConfig.domain;
     }
 
     function clearCookies(
@@ -83,7 +84,7 @@ export function createApp(appConfig: AppConfig) {
         accessCookie.secure = false;
         accessCookie.sameSite = 'lax';
         accessCookie.path = '/';
-        accessCookie.domain = 'localhost';
+        accessCookie.domain = appConfig.domain;
         accessCookie.maxAge = 0;
         accessCookie.expires = new Date(0);
 
@@ -92,7 +93,7 @@ export function createApp(appConfig: AppConfig) {
         refreshCookie.secure = false;
         refreshCookie.sameSite = 'lax';
         refreshCookie.path = '/';
-        refreshCookie.domain = 'localhost';
+        refreshCookie.domain = appConfig.domain;
         refreshCookie.maxAge = 0;
         refreshCookie.expires = new Date(0);
     }
@@ -251,14 +252,17 @@ export function createApp(appConfig: AppConfig) {
 }
 
 if (import.meta.main) {
+    const DOMAIN = process.env.DOMAIN;
     const ACCESS_TOKEN_SECRET = process.env.ACCESS_TOKEN_SECRET;
     const REFRESH_TOKEN_SECRET = process.env.REFRESH_TOKEN_SECRET;
 
+    if (!DOMAIN) throw new Error('DOMAIN is not set');
     if (!ACCESS_TOKEN_SECRET) throw new Error('ACCESS_TOKEN_SECRET is not set');
     if (!REFRESH_TOKEN_SECRET)
         throw new Error('REFRESH_TOKEN_SECRET is not set');
 
     const app = createApp({
+        domain: DOMAIN,
         accessTokenSecret: ACCESS_TOKEN_SECRET,
         refreshTokenSecret: REFRESH_TOKEN_SECRET,
     });

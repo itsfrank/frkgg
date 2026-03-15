@@ -4,6 +4,7 @@ import { createApp } from './index';
 
 function createTestApp(overrides?: Partial<Parameters<typeof createApp>[0]>) {
     return createApp({
+        domain: 'frk.localhost',
         accessTokenSecret: 'test-access-secret',
         refreshTokenSecret: 'test-refresh-secret',
         ...overrides,
@@ -61,7 +62,7 @@ describe('auth app', () => {
         );
         expect(getSetCookie(response, 'accessCookie')).toContain('Path=/');
         expect(getSetCookie(response, 'accessCookie')).toContain(
-            'Domain=localhost',
+            'Domain=frk.localhost',
         );
         expect(getSetCookie(response, 'refreshCookie')).toContain('HttpOnly');
         expect(getSetCookie(response, 'refreshCookie')).toContain(
@@ -69,7 +70,7 @@ describe('auth app', () => {
         );
         expect(getSetCookie(response, 'refreshCookie')).toContain('Path=/');
         expect(getSetCookie(response, 'refreshCookie')).toContain(
-            'Domain=localhost',
+            'Domain=frk.localhost',
         );
     });
 
