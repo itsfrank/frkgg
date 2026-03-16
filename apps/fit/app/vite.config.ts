@@ -3,6 +3,8 @@ import tailwindcss from '@tailwindcss/vite';
 import react from '@vitejs/plugin-react';
 import { defineConfig } from 'vite';
 
+const isStandalone = process.env.FIT_STANDALONE !== 'false';
+
 export default defineConfig({
     root: __dirname,
     plugins: [react(), tailwindcss()],
@@ -14,11 +16,15 @@ export default defineConfig({
     server: {
         host: '0.0.0.0',
         port: 3002,
-        hmr: {
-            host: 'fit.frk.localhost',
-            clientPort: 443,
-            protocol: 'wss',
-        },
+        ...(!isStandalone
+            ? {
+                  hmr: {
+                      host: 'fit.frk.localhost',
+                      clientPort: 443,
+                      protocol: 'wss',
+                  },
+              }
+            : {}),
         proxy: {
             '/api': {
                 target: 'http://127.0.0.1:3003',
