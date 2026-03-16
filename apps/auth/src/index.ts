@@ -2,6 +2,12 @@ import { jwt } from '@elysiajs/jwt';
 import { err, ok, type Result } from '@frkgg/shared';
 import { type Cookie, Elysia, t } from 'elysia';
 
+import {
+    authenticateGithubUser,
+    createGithubLoginResponse,
+    type FetchLike,
+} from './github-oauth';
+
 type AuthPayload = {
     subject: string;
     email: string;
@@ -11,11 +17,19 @@ type AppConfig = {
     domain: string;
     accessTokenSecret: string;
     refreshTokenSecret: string;
+    githubClientId: string;
+    githubClientSecret: string;
     accessTokenTtl?: string;
     refreshTokenTtl?: string;
+    oauthStateTtlMs?: number;
+    fetchImpl?: FetchLike;
+    now?: () => number;
 };
 
 export function createApp(appConfig: AppConfig) {
+    const siteOrigin = `https://${appConfig.domain}`;
+    const authOrigin = `https://auth.${appConfig.domain}`;
+
     const accessJwtPlugin = jwt({
         name: 'jwtAccess',
         secret: appConfig.accessTokenSecret,
@@ -26,6 +40,15 @@ export function createApp(appConfig: AppConfig) {
     });
 
     const refreshTokenStore = new Map<string, AuthPayload>();
+    const oauthStateStore = new Map<
+        string,
+        {
+            returnTo: string;
+            expiresAt: number;
+        }
+    >();
+    const fetchImpl = appConfig.fetchImpl ?? fetch;
+    const now = appConfig.now ?? Date.now;
 
     type AccessJwt = typeof accessJwtPlugin.decorator.jwtAccess;
     type RefreshJwt = typeof refreshJwtPlugin.decorator.jwtRefresh;
@@ -148,6 +171,34 @@ export function createApp(appConfig: AppConfig) {
         });
     }
 
+    function normalizeReturnTo(returnTo: string | undefined) {
+        if (!returnTo) return `${siteOrigin}/`;
+
+        try {
+            if (returnTo.startsWith('//')) return `${siteOrigin}/`;
+
+            const hasScheme = /^[a-zA-Z][a-zA-Z\d+\-.]*:/.test(returnTo);
+            const candidateUrl =
+                !returnTo.startsWith('/') && !hasScheme
+                    ? `https://${returnTo}`
+                    : returnTo;
+
+            const targetUrl = new URL(candidateUrl, siteOrigin);
+            const isHttps = targetUrl.protocol === 'https:';
+            const isExactDomain = targetUrl.hostname === appConfig.domain;
+            const isSubdomain = targetUrl.hostname.endsWith(
+                `.${appConfig.domain}`,
+            );
+
+            if (!isHttps || (!isExactDomain && !isSubdomain)) {
+                return `${siteOrigin}/`;
+            }
+
+            return targetUrl.toString();
+        } catch {
+            return `${siteOrigin}/`;
+        }
+    }
     return new Elysia()
         .use(accessJwtPlugin)
         .use(refreshJwtPlugin)
@@ -158,15 +209,65 @@ export function createApp(appConfig: AppConfig) {
             }),
         })
         .get(
-            '/login',
+            '/login/github',
+            ({ query }) => {
+                const state = crypto.randomUUID();
+                const returnTo = normalizeReturnTo(query.returnTo);
+                const expiresAt = now() + (appConfig.oauthStateTtlMs ?? 10 * 60 * 1000);
+
+                oauthStateStore.set(state, { returnTo, expiresAt });
+
+                return createGithubLoginResponse(
+                    authOrigin,
+                    appConfig.githubClientId,
+                    state,
+                );
+            },
+            {
+                query: t.Object({
+                    returnTo: t.Optional(t.String()),
+                }),
+            },
+        )
+        .get(
+            '/oauth/github/callback',
             async ({
                 jwtAccess,
                 jwtRefresh,
+                status,
+                query,
                 cookie: { accessCookie, refreshCookie },
             }) => {
+                if (!query.code || !query.state) {
+                    return status(400, 'Missing GitHub OAuth code or state');
+                }
+
+                const loginState = oauthStateStore.get(query.state);
+                oauthStateStore.delete(query.state);
+
+                if (!loginState || loginState.expiresAt < now()) {
+                    return status(400, 'GitHub OAuth state invalid or expired');
+                }
+
+                const githubAuthRes = await authenticateGithubUser(
+                    {
+                        authOrigin,
+                        githubClientId: appConfig.githubClientId,
+                        githubClientSecret: appConfig.githubClientSecret,
+                        fetchImpl,
+                    },
+                    query.code,
+                );
+                if (!githubAuthRes.ok) {
+                    return status(
+                        githubAuthRes.error.code,
+                        githubAuthRes.error.message,
+                    );
+                }
+
                 const auth = {
-                    subject: 'frk',
-                    email: 'me@frk.gg',
+                    subject: githubAuthRes.value.login,
+                    email: githubAuthRes.value.email,
                 };
 
                 const { access: accessToken, refresh: refreshToken } =
@@ -180,10 +281,19 @@ export function createApp(appConfig: AppConfig) {
                 );
 
                 refreshTokenStore.set(refreshToken, auth);
-                return {
-                    access: accessToken,
-                    refresh: refreshToken,
-                };
+
+                return new Response(null, {
+                    status: 302,
+                    headers: {
+                        Location: loginState.returnTo,
+                    },
+                });
+            },
+            {
+                query: t.Object({
+                    code: t.Optional(t.String()),
+                    state: t.Optional(t.String()),
+                }),
             },
         )
         .get('/logout', ({ cookie: { accessCookie, refreshCookie } }) => {
@@ -255,16 +365,23 @@ if (import.meta.main) {
     const DOMAIN = process.env.DOMAIN;
     const ACCESS_TOKEN_SECRET = process.env.ACCESS_TOKEN_SECRET;
     const REFRESH_TOKEN_SECRET = process.env.REFRESH_TOKEN_SECRET;
+    const GITHUB_CLIENT_ID = process.env.GITHUB_CLIENT_ID;
+    const GITHUB_CLIENT_SECRET = process.env.GITHUB_CLIENT_SECRET;
 
     if (!DOMAIN) throw new Error('DOMAIN is not set');
     if (!ACCESS_TOKEN_SECRET) throw new Error('ACCESS_TOKEN_SECRET is not set');
     if (!REFRESH_TOKEN_SECRET)
         throw new Error('REFRESH_TOKEN_SECRET is not set');
+    if (!GITHUB_CLIENT_ID) throw new Error('GITHUB_CLIENT_ID is not set');
+    if (!GITHUB_CLIENT_SECRET)
+        throw new Error('GITHUB_CLIENT_SECRET is not set');
 
     const app = createApp({
         domain: DOMAIN,
         accessTokenSecret: ACCESS_TOKEN_SECRET,
         refreshTokenSecret: REFRESH_TOKEN_SECRET,
+        githubClientId: GITHUB_CLIENT_ID,
+        githubClientSecret: GITHUB_CLIENT_SECRET,
     });
     app.listen(3000);
     console.log(

@@ -1,4 +1,4 @@
-GET localhost:3000/login
+GET localhost:3000/login/github
 
 ###
 

@@ -1,13 +1,14 @@
 import { ArrowUpRight, Github, Linkedin, Lock } from 'lucide-react';
 
 import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
+import { buttonVariants } from '@/components/ui/button';
 import {
     Card,
     CardContent,
     CardFooter,
     CardHeader,
 } from '@/components/ui/card';
+import { cn } from '@/lib/utils';
 
 const authOrigin =
     import.meta.env.VITE_AUTH_ORIGIN ?? 'https://auth.frk.localhost';
@@ -45,6 +46,12 @@ function SocialLink({
 }
 
 export default function App() {
+    const currentPathAndQuery =
+        typeof window === 'undefined'
+            ? '/'
+            : `${window.location.pathname}${window.location.search}${window.location.hash}`;
+    const loginUrl = `${authOrigin}/login/github?returnTo=${encodeURIComponent(currentPathAndQuery)}`;
+
     return (
         <main className="relative min-h-screen overflow-hidden bg-[radial-gradient(circle_at_top_left,_rgba(209,173,120,0.32),_transparent_28%),radial-gradient(circle_at_bottom_right,_rgba(82,57,38,0.16),_transparent_24%),linear-gradient(135deg,_hsl(var(--sand))_0%,_hsl(var(--cream))_48%,_hsl(var(--linen))_100%)] px-6 py-10 text-foreground sm:px-8 lg:px-12">
             <div className="absolute inset-0 bg-[linear-gradient(rgba(74,56,40,0.06)_1px,transparent_1px),linear-gradient(90deg,rgba(74,56,40,0.06)_1px,transparent_1px)] bg-[size:72px_72px] opacity-30" />
@@ -67,18 +74,20 @@ export default function App() {
                             </div>
                         </div>
                         <div className="mt-10 flex flex-col gap-4 sm:flex-row sm:items-center">
-                            <Button
-                                className="h-12 rounded-full px-6 text-base shadow-[0_16px_30px_rgba(34,24,16,0.24)]"
-                                onClick={() => {
-                                    window.location.href = `${authOrigin}/login`;
-                                }}
-                                type="button"
+                            <a
+                                className={cn(
+                                    buttonVariants({
+                                        className:
+                                            'h-12 rounded-full px-6 text-base shadow-[0_16px_30px_rgba(34,24,16,0.24)]',
+                                    }),
+                                )}
+                                href={loginUrl}
                             >
                                 <Lock className="mr-2 size-4" />
-                                Log in
-                            </Button>
+                                Log in with GitHub
+                            </a>
                             <p className="text-sm text-muted-foreground">
-                                Sign in via `auth.frk.localhost`.
+                                Sign in with GitHub via `auth.frk.localhost`.
                             </p>
                         </div>
                     </CardHeader>
