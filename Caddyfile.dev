@@ -5,6 +5,29 @@
 	}
 }
 
+(protected_app) {
+	reverse_proxy localhost:3000 {
+		method GET
+		rewrite /auth
+		header_up X-Forwarded-Method {method}
+		header_up X-Forwarded-Uri {uri}
+
+		@authenticated status 2xx
+		handle_response @authenticated {
+			request_header X-Auth-User {rp.header.X-Auth-User}
+			request_header X-Auth-Email {rp.header.X-Auth-Email}
+			copy_response_headers {
+				include Set-Cookie
+			}
+		}
+
+		@not_authenticated status 401
+		handle_response @not_authenticated {
+			redir https://frk.localhost/?returnTo=https://{host}{uri} temporary
+		}
+	}
+}
+
 auth.frk.localhost {
     tls internal
 	reverse_proxy localhost:3000
@@ -17,5 +40,6 @@ frk.localhost {
 
 fit.frk.localhost {
 	tls internal
+	import protected_app
 	reverse_proxy localhost:3002
 }

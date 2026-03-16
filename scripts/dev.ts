@@ -17,12 +17,12 @@ const commands = [
         prefixColor: 'yellow',
     },
     {
-        command: 'bun run --filter fit-api dev',
+        command: 'bun run --filter fit dev:api',
         name: 'fit-api',
         prefixColor: 'magenta',
     },
     {
-        command: 'bun run --filter fit dev',
+        command: 'bun run --filter fit dev:app',
         name: 'fit',
         prefixColor: 'cyan',
     },

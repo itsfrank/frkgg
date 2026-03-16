@@ -505,6 +505,8 @@ describe('auth app', () => {
         );
 
         expect(auth.status).toBe(200);
+        expect(auth.headers.get('x-auth-user')).toBe('itsfrank');
+        expect(auth.headers.get('x-auth-email')).toBe('me@frk.gg');
         expect(await auth.json()).toEqual({ ok: true });
     });
 

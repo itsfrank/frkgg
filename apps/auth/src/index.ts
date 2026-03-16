@@ -350,7 +350,9 @@ export function createApp(appConfig: AppConfig) {
                 return { auth: res.value.auth };
             },
         )
-        .get('/auth', () => {
+        .get('/auth', ({ auth, set }) => {
+            set.headers['X-Auth-User'] = auth.subject;
+            set.headers['X-Auth-Email'] = auth.email;
             return { ok: true };
         })
         .get('/me', async ({ auth }) => {

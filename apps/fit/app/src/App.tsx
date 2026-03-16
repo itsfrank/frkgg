@@ -2,15 +2,25 @@ import { Dumbbell } from 'lucide-react';
 import { useEffect, useState } from 'react';
 
 import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
-const defaultUsername = 'friend';
+type Viewer = {
+    username: string;
+    email: string;
+};
 
-async function fetchGreeting(username: string) {
-    const response = await fetch(
-        `/hello?username=${encodeURIComponent(username)}`,
-    );
+async function fetchViewer() {
+    const response = await fetch('/api/me');
+
+    if (!response.ok) {
+        throw new Error('Unable to load user');
+    }
+
+    return (await response.json()) as Viewer;
+}
+
+async function fetchGreeting() {
+    const response = await fetch('/api/hello');
 
     if (!response.ok) {
         throw new Error('Unable to load greeting');
@@ -20,9 +30,8 @@ async function fetchGreeting(username: string) {
 }
 
 export default function App() {
-    const [username, setUsername] = useState(defaultUsername);
-    const [draftUsername, setDraftUsername] = useState(defaultUsername);
-    const [greeting, setGreeting] = useState(`hello ${defaultUsername}`);
+    const [viewer, setViewer] = useState<Viewer | null>(null);
+    const [greeting, setGreeting] = useState('Loading greeting...');
     const [status, setStatus] = useState<'idle' | 'loading' | 'error'>('idle');
 
     useEffect(() => {
@@ -30,10 +39,11 @@ export default function App() {
 
         setStatus('loading');
 
-        fetchGreeting(username)
-            .then((nextGreeting) => {
+        Promise.all([fetchViewer(), fetchGreeting()])
+            .then(([nextViewer, nextGreeting]) => {
                 if (!active) return;
 
+                setViewer(nextViewer);
                 setGreeting(nextGreeting);
                 setStatus('idle');
             })
@@ -46,7 +56,10 @@ export default function App() {
         return () => {
             active = false;
         };
-    }, [username]);
+    }, []);
+
+    const username = viewer?.username ?? 'friend';
+    const email = viewer?.email;
 
     return (
         <main className="min-h-screen bg-[radial-gradient(circle_at_top,_rgba(244,140,64,0.26),_transparent_30%),linear-gradient(160deg,_hsl(var(--canvas))_0%,_hsl(var(--background))_52%,_hsl(var(--canvas-deep))_100%)] px-6 py-10 text-foreground sm:px-8">
@@ -72,38 +85,18 @@ export default function App() {
                     </CardHeader>
                     <CardContent className="grid gap-8 p-8 sm:grid-cols-[1.1fr_0.9fr] sm:p-10">
                         <section className="space-y-4">
-                            <label
-                                className="text-sm font-medium uppercase tracking-[0.18em] text-muted-foreground"
-                                htmlFor="username"
-                            >
-                                Username
-                            </label>
-                            <div className="flex flex-col gap-3 sm:flex-row">
-                                <input
-                                    className="h-12 flex-1 rounded-2xl border border-input bg-background/80 px-4 text-base outline-none transition focus:border-ring focus:ring-2 focus:ring-ring/20"
-                                    id="username"
-                                    onChange={(event) =>
-                                        setDraftUsername(event.target.value)
-                                    }
-                                    placeholder="Enter a username"
-                                    value={draftUsername}
-                                />
-                                <Button
-                                    className="h-12 rounded-2xl px-6"
-                                    onClick={() =>
-                                        setUsername(
-                                            draftUsername.trim() ||
-                                                defaultUsername,
-                                        )
-                                    }
-                                    type="button"
-                                >
-                                    Refresh hello
-                                </Button>
-                            </div>
+                            <p className="text-sm font-medium uppercase tracking-[0.18em] text-muted-foreground">
+                                Signed in as
+                            </p>
+                            <p className="rounded-[1.5rem] border border-border/70 bg-background/70 px-4 py-4 text-base text-foreground">
+                                {status === 'error'
+                                    ? 'Unable to load authenticated user'
+                                    : username}
+                            </p>
                             <p className="text-sm leading-6 text-muted-foreground">
-                                The frontend calls the Elysia backend at
-                                `/hello`, then shows the current response below.
+                                {status === 'error'
+                                    ? 'Fit could not load your authenticated session from the protected backend.'
+                                    : `The frontend is using the authenticated identity forwarded by Caddy through the fit backend.${email ? ` Signed in email: ${email}.` : ''}`}
                             </p>
                         </section>
                         <section className="rounded-[1.75rem] border border-border/70 bg-secondary/50 p-6">

@@ -49,7 +49,15 @@ export default function App() {
     const currentPathAndQuery =
         typeof window === 'undefined'
             ? '/'
-            : `${window.location.pathname}${window.location.search}${window.location.hash}`;
+            : (() => {
+                  const url = new URL(window.location.href);
+                  const returnTo = url.searchParams.get('returnTo');
+
+                  return (
+                      returnTo ??
+                      `${window.location.pathname}${window.location.search}${window.location.hash}`
+                  );
+              })();
     const loginUrl = `${authOrigin}/login/github?returnTo=${encodeURIComponent(currentPathAndQuery)}`;
 
     return (
