@@ -16,6 +16,16 @@ const commands = [
         name: 'site',
         prefixColor: 'yellow',
     },
+    {
+        command: 'bun run --filter fit-api dev',
+        name: 'fit-api',
+        prefixColor: 'magenta',
+    },
+    {
+        command: 'bun run --filter fit dev',
+        name: 'fit',
+        prefixColor: 'cyan',
+    },
 ];
 
 const { result } = concurrently(commands, {

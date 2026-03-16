@@ -1,0 +1,21 @@
+{
+    "name": "fit-api",
+    "module": "src/index.ts",
+    "type": "module",
+    "private": true,
+    "scripts": {
+        "dev": "bun run --watch src/index.ts",
+        "lint": "bunx biome check .",
+        "test": "bun test",
+        "typecheck": "bunx tsc --noEmit -p tsconfig.json"
+    },
+    "dependencies": {
+        "elysia": "^1.4.27"
+    },
+    "devDependencies": {
+        "@types/bun": "latest"
+    },
+    "peerDependencies": {
+        "typescript": "^5"
+    }
+}

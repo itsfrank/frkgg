@@ -14,3 +14,8 @@ frk.localhost {
 	tls internal
 	reverse_proxy localhost:3001
 }
+
+fit.frk.localhost {
+	tls internal
+	reverse_proxy localhost:3002
+}
