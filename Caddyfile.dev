@@ -14,6 +14,7 @@
 
 		@authenticated status 2xx
 		handle_response @authenticated {
+			request_header X-Auth-Id {rp.header.X-Auth-Id}
 			request_header X-Auth-User {rp.header.X-Auth-User}
 			request_header X-Auth-Email {rp.header.X-Auth-Email}
 			copy_response_headers {

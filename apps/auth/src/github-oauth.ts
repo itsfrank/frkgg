@@ -175,6 +175,7 @@ export async function authenticateGithubUser(
 ): Promise<
     Result<
         {
+            id: number;
             login: string;
             email: string;
         },
@@ -191,7 +192,10 @@ export async function authenticateGithubUser(
 
     const login = profileRes.value.login.toLowerCase();
     if (!isGithubUserAllowed(login)) {
-        return err({ code: 403, message: 'Forbidden: GitHub user is not allowed' });
+        return err({
+            code: 403,
+            message: 'Forbidden: GitHub user is not allowed',
+        });
     }
 
     const email =
@@ -203,6 +207,7 @@ export async function authenticateGithubUser(
         })());
 
     return ok({
+        id: profileRes.value.id,
         login: profileRes.value.login,
         email,
     });

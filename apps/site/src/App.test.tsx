@@ -24,7 +24,11 @@ describe('site app', () => {
         expect(
             screen
                 .getAllByRole('link')
-                .find((link) => link.getAttribute('href') === 'https://github.com/itsfrank'),
+                .find(
+                    (link) =>
+                        link.getAttribute('href') ===
+                        'https://github.com/itsfrank',
+                ),
         ).toHaveTextContent('GitHub');
         expect(
             screen.getByRole('link', {

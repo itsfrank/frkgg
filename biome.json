@@ -19,9 +19,6 @@
             "recommended": true
         }
     },
-    "organizeImports": {
-        "enabled": true
-    },
     "javascript": {
         "formatter": {
             "quoteStyle": "single",

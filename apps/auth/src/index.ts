@@ -9,6 +9,7 @@ import {
 } from './github-oauth';
 
 type AuthPayload = {
+    id: number;
     subject: string;
     email: string;
 };
@@ -213,7 +214,8 @@ export function createApp(appConfig: AppConfig) {
             ({ query }) => {
                 const state = crypto.randomUUID();
                 const returnTo = normalizeReturnTo(query.returnTo);
-                const expiresAt = now() + (appConfig.oauthStateTtlMs ?? 10 * 60 * 1000);
+                const expiresAt =
+                    now() + (appConfig.oauthStateTtlMs ?? 10 * 60 * 1000);
 
                 oauthStateStore.set(state, { returnTo, expiresAt });
 
@@ -266,6 +268,7 @@ export function createApp(appConfig: AppConfig) {
                 }
 
                 const auth = {
+                    id: githubAuthRes.value.id,
                     subject: githubAuthRes.value.login,
                     email: githubAuthRes.value.email,
                 };
@@ -351,12 +354,14 @@ export function createApp(appConfig: AppConfig) {
             },
         )
         .get('/auth', ({ auth, set }) => {
+            set.headers['X-Auth-Id'] = String(auth.id);
             set.headers['X-Auth-User'] = auth.subject;
             set.headers['X-Auth-Email'] = auth.email;
             return { ok: true };
         })
         .get('/me', async ({ auth }) => {
             return {
+                id: auth.id,
                 subject: auth.subject,
                 email: auth.email,
             };

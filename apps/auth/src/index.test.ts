@@ -59,6 +59,17 @@ function getCookieHeader(response: Response) {
         .join('; ');
 }
 
+function decodeJwtPayload(token: string) {
+    const [, payload] = token.split('.');
+    if (!payload) throw new Error('Invalid JWT payload');
+
+    return JSON.parse(Buffer.from(payload, 'base64url').toString('utf8')) as {
+        id?: number;
+        subject?: string;
+        email?: string;
+    };
+}
+
 async function startLogin(
     app: ReturnType<typeof createTestApp>,
     returnTo = '/private?tab=1',
@@ -110,7 +121,10 @@ describe('auth app', () => {
     test('login/github redirects to GitHub and stores returnTo state', async () => {
         const app = createTestApp();
 
-        const { response, location } = await startLogin(app, '/vault?from=hero');
+        const { response, location } = await startLogin(
+            app,
+            '/vault?from=hero',
+        );
 
         expect(response.status).toBe(302);
         expect(location).toStartWith(
@@ -315,13 +329,17 @@ describe('auth app', () => {
             new Request('http://localhost/oauth/github/callback?state=abc'),
         );
         expect(missingCode.status).toBe(400);
-        expect(await missingCode.text()).toBe('Missing GitHub OAuth code or state');
+        expect(await missingCode.text()).toBe(
+            'Missing GitHub OAuth code or state',
+        );
 
         const missingState = await app.handle(
             new Request('http://localhost/oauth/github/callback?code=abc'),
         );
         expect(missingState.status).toBe(400);
-        expect(await missingState.text()).toBe('Missing GitHub OAuth code or state');
+        expect(await missingState.text()).toBe(
+            'Missing GitHub OAuth code or state',
+        );
     });
 
     test('callback rejects invalid state', async () => {
@@ -334,7 +352,9 @@ describe('auth app', () => {
         );
 
         expect(callback.status).toBe(400);
-        expect(await callback.text()).toBe('GitHub OAuth state invalid or expired');
+        expect(await callback.text()).toBe(
+            'GitHub OAuth state invalid or expired',
+        );
     });
 
     test('callback rejects expired state', async () => {
@@ -360,7 +380,9 @@ describe('auth app', () => {
         );
 
         expect(callback.status).toBe(400);
-        expect(await callback.text()).toBe('GitHub OAuth state invalid or expired');
+        expect(await callback.text()).toBe(
+            'GitHub OAuth state invalid or expired',
+        );
     });
 
     test('callback rejects when GitHub token exchange fails', async () => {
@@ -431,12 +453,10 @@ describe('auth app', () => {
             fetchImpl: fetchMock,
         });
 
-        const { response, accessCookie, refreshCookie } = await completeGithubLogin(
-            app,
-            {
+        const { response, accessCookie, refreshCookie } =
+            await completeGithubLogin(app, {
                 returnTo: '/private?tab=1',
-            },
-        );
+            });
 
         expect(response.status).toBe(302);
         expect(response.headers.get('location')).toBe(
@@ -446,6 +466,12 @@ describe('auth app', () => {
         expect(refreshCookie).toBeString();
         expect(getSetCookie(response, 'accessCookie')).toContain('HttpOnly');
         expect(getSetCookie(response, 'refreshCookie')).toContain('HttpOnly');
+
+        expect(decodeJwtPayload(accessCookie!)).toMatchObject({
+            id: 123,
+            subject: 'itsfrank',
+            email: 'me@frk.gg',
+        });
     });
 
     test('callback falls back to a noreply email when GitHub profile and email API do not provide one', async () => {
@@ -476,6 +502,7 @@ describe('auth app', () => {
 
         expect(me.status).toBe(200);
         expect(await me.json()).toEqual({
+            id: 123,
             subject: 'itsfrank',
             email: 'itsfrank@users.noreply.github.com',
         });
@@ -505,6 +532,7 @@ describe('auth app', () => {
         );
 
         expect(auth.status).toBe(200);
+        expect(auth.headers.get('x-auth-id')).toBe('123');
         expect(auth.headers.get('x-auth-user')).toBe('itsfrank');
         expect(auth.headers.get('x-auth-email')).toBe('me@frk.gg');
         expect(await auth.json()).toEqual({ ok: true });
@@ -535,6 +563,7 @@ describe('auth app', () => {
 
         expect(me.status).toBe(200);
         expect(await me.json()).toEqual({
+            id: 123,
             subject: 'itsfrank',
             email: 'me@frk.gg',
         });
@@ -585,24 +614,22 @@ describe('auth app', () => {
     });
 
     test('me refreshes automatically when access token expires but refresh token is still valid', async () => {
-        const app = createTestApp(
-            {
-                accessTokenTtl: '1s',
-                refreshTokenTtl: '10s',
-                fetchImpl: createFetchMock([
-                    {
-                        body: { access_token: 'github-access-token' },
+        const app = createTestApp({
+            accessTokenTtl: '1s',
+            refreshTokenTtl: '10s',
+            fetchImpl: createFetchMock([
+                {
+                    body: { access_token: 'github-access-token' },
+                },
+                {
+                    body: {
+                        id: 123,
+                        login: 'itsfrank',
+                        email: 'me@frk.gg',
                     },
-                    {
-                        body: {
-                            id: 123,
-                            login: 'itsfrank',
-                            email: 'me@frk.gg',
-                        },
-                    },
-                ]),
-            },
-        );
+                },
+            ]),
+        });
         const loginResponse = await completeGithubLogin(app);
 
         await Bun.sleep(1100);
@@ -617,6 +644,7 @@ describe('auth app', () => {
 
         expect(me.status).toBe(200);
         expect(await me.json()).toEqual({
+            id: 123,
             subject: 'itsfrank',
             email: 'me@frk.gg',
         });
@@ -664,6 +692,13 @@ describe('auth app', () => {
         expect(getCookieValue(refresh, 'refreshCookie')).not.toBe(
             loginResponse.refreshCookie,
         );
+        expect(
+            decodeJwtPayload(getCookieValue(refresh, 'accessCookie')!),
+        ).toMatchObject({
+            id: 123,
+            subject: 'itsfrank',
+            email: 'me@frk.gg',
+        });
     });
 
     test('old refresh token cannot be reused after rotation', async () => {
