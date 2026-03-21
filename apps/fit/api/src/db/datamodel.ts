@@ -8,13 +8,13 @@ export class Weight {
     }
     asLbs() {
         if (this.isKg) {
-            return this.value / 2.20462;
+            return this.value * 2.20462;
         }
         return this.value;
     }
     asKgs() {
         if (!this.isKg) {
-            return this.value * 2.20462;
+            return this.value / 2.20462;
         }
         return this.value;
     }

@@ -71,6 +71,21 @@ describe('exercises', () => {
 
         expect(exercises).toEqual([otherUserExercise]);
     });
+
+    it('preserves kilogram weights when saving and loading an exercise', async () => {
+        const exercise = await db.createExercise(123, {
+            name: 'Front Squat',
+            weight: Weight.fromKgs(100),
+            reps: 3,
+            sets: 5,
+        });
+
+        expect(exercise.weight.asKgs()).toBe(100);
+
+        const foundExercise = await db.getExercise(exercise.id);
+        expect(foundExercise).not.toBeNull();
+        expect(foundExercise?.weight.asKgs()).toBe(100);
+    });
 });
 
 describe('workouts', () => {
