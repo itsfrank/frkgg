@@ -21,13 +21,14 @@ This starts:
 
 In standalone mode, the API uses a fixed mock authenticated user by default:
 
+- user id: `1`
 - username: `dev-user`
 - email: `dev-user@example.com`
 
 Optional overrides:
 
 ```bash
-FIT_STANDALONE_USERNAME=coach FIT_STANDALONE_EMAIL=coach@example.com bun run dev:api
+FIT_STANDALONE_USER_ID=77 FIT_STANDALONE_USERNAME=coach FIT_STANDALONE_EMAIL=coach@example.com bun run dev:api
 ```
 
 ## Integrated mode
@@ -40,6 +41,7 @@ bun run dev
 
 That starts Caddy, auth, site, and fit together. The fit app and API run in integrated mode, where fit expects Caddy to forward:
 
+- `X-Auth-Id`
 - `X-Auth-User`
 - `X-Auth-Email`
 

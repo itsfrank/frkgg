@@ -19,6 +19,7 @@ describe('App', () => {
                     return Promise.resolve({
                         ok: true,
                         json: async () => ({
+                            id: 123,
                             username: 'itsfrank',
                             email: 'me@frk.gg',
                         }),
