@@ -8,6 +8,9 @@ import {
     type FetchLike,
 } from './github-oauth';
 
+const DEFAULT_ACCESS_TOKEN_TTL = '10m';
+const DEFAULT_REFRESH_TOKEN_TTL = '1d';
+
 type AuthPayload = {
     id: number;
     subject: string;
@@ -59,8 +62,10 @@ export function createApp(appConfig: AppConfig) {
         jwtRefresh: RefreshJwt,
         auth: AuthPayload,
     ) {
-        const accessTokenTtl = appConfig.accessTokenTtl ?? '10s';
-        const refreshTokenTtl = appConfig.refreshTokenTtl ?? '30s';
+        const accessTokenTtl =
+            appConfig.accessTokenTtl ?? DEFAULT_ACCESS_TOKEN_TTL;
+        const refreshTokenTtl =
+            appConfig.refreshTokenTtl ?? DEFAULT_REFRESH_TOKEN_TTL;
 
         const newAccessToken = await jwtAccess.sign({
             ...auth,
