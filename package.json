@@ -10,7 +10,7 @@
         "lint": "bunx biome check .",
         "style": "bunx biome check --write .",
         "coverage:report": "bun test --coverage --coverage-reporter=lcov && genhtml coverage/lcov.info --output-directory coverage/html && open coverage/html/index.html",
-        "test": "bun test",
+        "test": "bun run --filter auth test && bun run --filter site test && bun run --filter fit test",
         "typecheck": "bunx tsc --noEmit",
         "dev": "bun run ./scripts/dev.ts"
     },
