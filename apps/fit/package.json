@@ -14,7 +14,7 @@
         "lint": "bunx biome check .",
         "test": "bun run test:app && bun run test:api",
         "test:app": "vitest run --config app/vite.config.ts",
-        "test:api": "bun test api/src/index.test.ts",
+        "test:api": "bun test api/src",
         "typecheck": "bun run typecheck:app && bun run typecheck:api",
         "typecheck:app": "tsc --noEmit -p app/tsconfig.json",
         "typecheck:api": "tsc --noEmit -p api/tsconfig.json"

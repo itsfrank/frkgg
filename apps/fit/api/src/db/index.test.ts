@@ -48,4 +48,99 @@ describe('exercises', () => {
         expect(exercises).toContainEqual(ex2);
         expect(exercises).toContainEqual(ex3);
     });
+
+    it('returns null for a missing exercise', async () => {
+        expect(await db.getExercise(999)).toBeNull();
+    });
+
+    it('only returns exercises for the requested user', async () => {
+        await db.createExercise(123, {
+            name: 'Squat',
+            weight: Weight.fromLbs(185),
+            reps: 5,
+            sets: 3,
+        });
+        const otherUserExercise = await db.createExercise(456, {
+            name: 'Press',
+            weight: Weight.fromLbs(95),
+            reps: 8,
+            sets: 3,
+        });
+
+        const exercises = await db.getUserExercises(456);
+
+        expect(exercises).toEqual([otherUserExercise]);
+    });
+});
+
+describe('workouts', () => {
+    it('can create a workout and load its exercises in order', async () => {
+        const squat = await db.createExercise(123, {
+            name: 'Squat',
+            weight: Weight.fromLbs(185),
+            reps: 5,
+            sets: 3,
+        });
+        const deadlift = await db.createExercise(123, {
+            name: 'Deadlift',
+            weight: Weight.fromLbs(315),
+            reps: 5,
+            sets: 1,
+        });
+
+        const workout = await db.createWorkout(123, {
+            name: 'Heavy Day',
+            exercises: [
+                { id: deadlift.id, order: 2 },
+                { id: squat.id, order: 1 },
+            ],
+        });
+
+        expect(workout.name).toBe('Heavy Day');
+        expect(workout.userId).toBe(123);
+        expect(workout.id).toBeGreaterThan(0);
+
+        const foundWorkout = await db.getWorkout(workout.id);
+        expect(foundWorkout).toEqual({
+            ...workout,
+            exercises: [squat, deadlift],
+        });
+    });
+
+    it('returns null for a missing workout', async () => {
+        expect(await db.getWorkout(999)).toBeNull();
+    });
+
+    it('only returns workouts for the requested user', async () => {
+        const squat = await db.createExercise(123, {
+            name: 'Squat',
+            weight: Weight.fromLbs(185),
+            reps: 5,
+            sets: 3,
+        });
+        const press = await db.createExercise(456, {
+            name: 'Press',
+            weight: Weight.fromLbs(95),
+            reps: 8,
+            sets: 3,
+        });
+
+        await db.createWorkout(123, {
+            name: 'Lower',
+            exercises: [{ id: squat.id, order: 1 }],
+        });
+        const otherUserWorkout = await db.createWorkout(456, {
+            name: 'Upper',
+            exercises: [{ id: press.id, order: 1 }],
+        });
+
+        const workouts = await db.getWorkouts(456);
+
+        expect(workouts).toEqual([
+            {
+                ...otherUserWorkout,
+                exercises: [press],
+            },
+        ]);
+    });
 });
