@@ -1,34 +1,43 @@
-import { Database } from "bun:sqlite";
-import { drizzle } from "drizzle-orm/bun-sqlite";
-import { eq } from "drizzle-orm";
-import { pushSQLiteSchema } from "drizzle-kit/api"
-import { users, exercises, workouts, workoutExercises } from "./schema";
-import { Weight } from "./datamodel";
+import { Database } from 'bun:sqlite';
+import { pushSQLiteSchema } from 'drizzle-kit/api';
+import { eq } from 'drizzle-orm';
+import { drizzle } from 'drizzle-orm/bun-sqlite';
+import { Weight } from './datamodel';
+import { exercises, users, workoutExercises, workouts } from './schema';
 
 export const schema = { users, exercises, workouts, workoutExercises };
 
-const sqlite = new Database(":memory:");
+const sqlite = new Database(':memory:');
 export const db = drizzle(sqlite, { schema });
 
 let initialized = false;
 export async function initDb() {
     if (initialized) return;
-    const result = await pushSQLiteSchema(schema, db as unknown as Parameters<typeof pushSQLiteSchema>[1],);
+    const result = await pushSQLiteSchema(
+        schema,
+        db as unknown as Parameters<typeof pushSQLiteSchema>[1],
+    );
     await result.apply();
     initialized = true;
 }
 
-export async function createExercise(userId: number, exerciseData: {
-    name: string;
-    weight: Weight;
-    reps: number;
-    sets: number;
-}) {
-    const [created] = await db.insert(exercises).values({
-        ...exerciseData,
-        weight: exerciseData.weight.asLbs(),
-        userId,
-    }).returning();
+export async function createExercise(
+    userId: number,
+    exerciseData: {
+        name: string;
+        weight: Weight;
+        reps: number;
+        sets: number;
+    },
+) {
+    const [created] = await db
+        .insert(exercises)
+        .values({
+            ...exerciseData,
+            weight: exerciseData.weight.asLbs(),
+            userId,
+        })
+        .returning();
     return created;
 }
 
@@ -43,7 +52,7 @@ export async function getExercise(id: number) {
     return {
         ...found,
         weight: Weight.fromLbs(found.weight),
-    }
+    };
 }
 
 export async function getExercises(userId: number) {
@@ -57,18 +66,24 @@ export async function getExercises(userId: number) {
         return {
             ...e,
             weight: Weight.fromLbs(e.weight),
-        }
+        };
     });
 }
 
-export async function createWorkout(userId: number, workoutData: {
-    name: string;
-    exercises: { id: number, order: number }[];
-}) {
-    const [created] = await db.insert(workouts).values({
-        name: workoutData.name,
-        userId,
-    }).returning();
+export async function createWorkout(
+    userId: number,
+    workoutData: {
+        name: string;
+        exercises: { id: number; order: number }[];
+    },
+) {
+    const [created] = await db
+        .insert(workouts)
+        .values({
+            name: workoutData.name,
+            userId,
+        })
+        .returning();
 
     for (const exerciseData of workoutData.exercises) {
         await db.insert(workoutExercises).values({
@@ -95,7 +110,9 @@ export async function getWorkout(id: number) {
         .where(eq(workoutExercises.workoutId, id))
         .orderBy(workoutExercises.order);
 
-    const exercisePromises = foundWorkoutExercises.map((e) => getExercise(e.exerciseId));
+    const exercisePromises = foundWorkoutExercises.map((e) =>
+        getExercise(e.exerciseId),
+    );
     const foundExercises = await Promise.all(exercisePromises);
 
     return {
@@ -108,10 +125,9 @@ export async function getWorkouts(userId: number) {
     const found = await db
         .select()
         .from(workouts)
-        .where(eq(workouts.userId, userId))
+        .where(eq(workouts.userId, userId));
 
     const workoutPromises = found.map((w) => getWorkout(w.id));
     const foundWorkouts = await Promise.all(workoutPromises);
     return foundWorkouts.filter((w) => w !== null);
 }
-

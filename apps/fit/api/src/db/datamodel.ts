@@ -1,4 +1,4 @@
-import { exercises } from "./schema";
+import type { exercises } from './schema';
 
 export class Weight {
     private value: number = 0;
@@ -31,8 +31,8 @@ export class Weight {
 export type ExerciseRow = typeof exercises.$inferSelect;
 export type NewExerciseRow = typeof exercises.$inferInsert;
 
-type ExerciseData = Omit<ExerciseRow, "weight"> & {
-  weight: Weight;
+type ExerciseData = Omit<ExerciseRow, 'weight'> & {
+    weight: Weight;
 };
 
 class Exercise {

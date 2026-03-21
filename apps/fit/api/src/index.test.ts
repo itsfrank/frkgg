@@ -36,7 +36,9 @@ describe('createApp', () => {
 
     it('rejects requests without forwarded auth headers in integrated mode', async () => {
         const app = createApp({ standalone: false });
-        const response = await app.handle(new Request('http://localhost/api/me'));
+        const response = await app.handle(
+            new Request('http://localhost/api/me'),
+        );
 
         expect(response.status).toBe(401);
         expect(await response.text()).toBe('Unauthorized');
@@ -44,7 +46,9 @@ describe('createApp', () => {
 
     it('returns the mock user in standalone mode', async () => {
         const app = createApp({ standalone: true });
-        const response = await app.handle(new Request('http://localhost/api/me'));
+        const response = await app.handle(
+            new Request('http://localhost/api/me'),
+        );
 
         expect(await response.json()).toEqual({
             username: 'dev-user',
